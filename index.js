@@ -4,6 +4,10 @@ const cors = require('cors');
 const app = express();
 const fs = require('fs');
 const dns = require('dns');
+const bodyParser = require('body-parser');
+
+// Use body-parser to parse the request body
+app.use(bodyParser.urlencoded({extended: false}));
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -32,16 +36,14 @@ app.post('/api/shorturl', (req, res) => {
   const url = req.body.url;
 
   // Check if url is valid
-  dns.lookup(url, (err, urlAddress) => {
-    if (err) {
-      res.json({error: 'invalid url'});
-    }
-    else {
-      // Get short url form of the given url
-      const short_url = getUrl(url);
-      res.json({original_url: url, short_url: short_url});
-    }
-  });
+  if (isValidUrl(url) === false) {
+    res.json({error: 'invalid url'});
+  }
+  else {
+    // Get short url form of the given url
+    const short_url = getUrl(url);
+    res.json({original_url: url, short_url: short_url});
+  }
 });
 
 // Function to get a url from json/url.json, and if it doesn't exist, create a new one and return that
@@ -100,4 +102,10 @@ function getLastShortUrl() {
       return lastShortUrl;
     }
   });
+}
+
+// Function to test the validity of the url using regexp
+function isValidUrl(url) {
+  const urlRegex = /^(http|https):\/\/www\.[a-z0-9]+\.[a-z]+(\/[a-z0-9]+)*$/i;
+  return urlRegex.test(url);
 }
