@@ -37,7 +37,9 @@ app.post('/api/shorturl', (req, res) => {
       res.json({error: 'invalid url'});
     }
     else {
-
+      // Get short url form of the given url
+      const short_url = getUrl(url);
+      res.json({original_url: url, short_url: short_url});
     }
   });
 });
