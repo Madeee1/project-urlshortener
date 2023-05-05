@@ -48,7 +48,8 @@ app.post('/api/shorturl', (req, res) => {
 
 // Function to get a url from json/url.json, and if it doesn't exist, create a new one and return that
 function getUrl(url) {
-  fs.readFile('./json/url.json', 'utf8', (err, data) => {
+  /*
+  fs.readFileSync('./url.json', 'utf8', (err, data) => {
     if (err) {console.log(err);}
     
     else {
@@ -68,18 +69,39 @@ function getUrl(url) {
       }
     }
   });
+  */
+  // Call the getJSON function
+  getJSON()
+    .then((data) => {
+      let urlDataArray = JSON.parse(data);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+  let urlObject = urlDataArray.find((urlObject) => urlObject.original_url === url);
+
+  // If the url exists, return its short url form
+  if (urlObject) {
+    return urlObject.short_url;
+  }
+  // If it doesnt exist, create a new one and return it
+  else {
+    const short_url = getLastShortUrl() + 1;
+    postUrl(url, short_url);
+    return short_url;
+  }
 }
 
 // Function to write a POST request to json/url.json
 function postUrl(url, short_url) {
-  fs.readFile('./json/url.json', 'utf8', (err, data) => {
+  fs.readFileSync('./url.json', 'utf8', (err, data) => {
     if (err) {console.log(err);}
     
     else {
       const urlData = JSON.parse(data);
       urlData.push({url: url, short_url: short_url});
       
-      fs.writeFile('./json/url.json', JSON.stringify(urlData), (err) => {
+      fs.writeFileSync('./url.json', JSON.stringify(urlData), (err) => {
         if (err) {
           console.log(err);
         }
@@ -93,7 +115,7 @@ function postUrl(url, short_url) {
 
 // Function get the last short_url in the json/url.json file
 function getLastShortUrl() {
-  fs.readFile('./json/url.json', 'utf8', (err, data) => {
+  fs.readFileSync('./url.json', 'utf8', (err, data) => {
     if (err) {console.log(err);}
     
     else {
@@ -108,4 +130,11 @@ function getLastShortUrl() {
 function isValidUrl(url) {
   const urlRegex = /^(http|https):\/\/www\.[a-z0-9]+\.[a-z]+(\/[a-z0-9]+)*$/i;
   return urlRegex.test(url);
+}
+
+// Function to get JSON as javascript object
+async function getJSON() {
+  const fetch = await import('node-fetch');
+  const response = await fetch('./url.json');
+  return response.json();
 }
