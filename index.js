@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const bodyParser = require('body-parser');
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -22,3 +23,22 @@ app.get('/api/hello', function(req, res) {
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
 });
+
+// Function to handle POST to /api/shorturl
+app.post('/api/shorturl', bodyParser.urlencoded({ extended: false }), (req, res) => {
+  const url = req.body.url;
+  
+  // Check if url is valid
+  if (!isValidURL(url)) {
+    res.json({ error: 'invalid url' });
+  }
+  else {
+    
+  }
+});
+
+// Function to test if url is valid with this regex 
+function isValidURL(url) {
+  const urlRegex = new RegExp('^(https?:\/\/)?[a-zA-Z0-9]+\.[a-zA-Z]{2,}(\/\S*)?$');
+  return urlRegex.test(url);
+}
