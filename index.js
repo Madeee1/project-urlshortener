@@ -42,3 +42,9 @@ function isValidURL(url) {
   const urlRegex = new RegExp('^(https?:\/\/)?[a-zA-Z0-9]+\.[a-zA-Z]{2,}(\/\S*)?$');
   return urlRegex.test(url);
 }
+
+// Use of mongoose starts here
+const mongoose = require('mongoose');
+
+// Connect to database
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
