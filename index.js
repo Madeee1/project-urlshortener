@@ -7,6 +7,9 @@ const bodyParser = require("body-parser");
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
+// Use a bodyparser middleware
+app.use(bodyParser.urlencoded({ extended: false }));
+
 app.use(cors());
 
 app.use("/public", express.static(`${process.cwd()}/public`));
@@ -25,34 +28,30 @@ app.listen(port, function () {
 });
 
 // Function to handle POST to /api/shorturl
-app.post(
-  "/api/shorturl",
-  bodyParser.urlencoded({ extended: false }),
-  (req, res) => {
-    const url = req.body.url;
+app.post("/api/shorturl", (req, res) => {
+  const url = req.body.url;
 
-    // Check if url is valid
-    if (!isValidURL(url)) {
-      res.json({ error: "invalid url" });
-    } else {
-      // Check if url is already in database using then()
-      urlExists(url).then((data) => {
-        if (data === null) {
-          addUrl(url).then((savedUrl) => {
-            res.json({
-              original_url: savedUrl.original_url,
-              short_url: savedUrl.short_url,
-            });
+  // Check if url is valid
+  if (!isValidURL(url)) {
+    res.json({ error: "invalid url" });
+  } else {
+    // Check if url is already in database using then()
+    urlExists(url).then((data) => {
+      if (data === null) {
+        addUrl(url).then((savedUrl) => {
+          res.json({
+            original_url: savedUrl.original_url,
+            short_url: savedUrl.short_url,
           });
-        } else {
-          getByOriginalUrl(url).then((shortUrl) => {
-            res.json({ original_url: url, short_url: shortUrl });
-          });
-        }
-      });
-    }
+        });
+      } else {
+        getByOriginalUrl(url).then((shortUrl) => {
+          res.json({ original_url: url, short_url: shortUrl });
+        });
+      }
+    });
   }
-);
+});
 
 // Function to handle GET to /api/shorturl/:shortUrl
 app.get("/api/shorturl/:shortUrl", (req, res) => {
