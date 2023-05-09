@@ -69,7 +69,8 @@ app.get("/api/shorturl/:shortUrl", (req, res) => {
 
 // Function to test if url is valid with this regex
 function isValidURL(url) {
-  const urlRegex = /^(http|https):\/\/[a-z0-9]+\.[a-z]+(\/[a-z0-9]+)*$/i;
+  const urlRegex =
+    /^(http|https):\/\/(?:www\.)?[a-z0-9]+\.[a-z]+(\/[a-z0-9]+)*$/i;
   return urlRegex.test(url);
 }
 
