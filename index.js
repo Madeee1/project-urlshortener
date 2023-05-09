@@ -33,11 +33,14 @@ app.post("/api/shorturl", (req, res) => {
 
   // Check if url is valid
   if (!isValidURL(url)) {
+    console.log("URL SENT & INVALID: " + url);
     res.json({ error: "invalid url" });
   } else {
     // Check if url is already in database using then()
     urlExists(url).then((data) => {
+      console.log("URL EXISTS: " + data);
       if (data === null) {
+        console.log("URL EXISTS, LINE 43, ADDURL IS CALLED FOR: " + url);
         addUrl(url).then((savedUrl) => {
           res.json({
             original_url: savedUrl.original_url,
@@ -45,6 +48,10 @@ app.post("/api/shorturl", (req, res) => {
           });
         });
       } else {
+        console.log(
+          "URL DOES NOT EXIST IN MONGO, LINE 1, GETBYORIGINALURL CALLED FOR: " +
+            url
+        );
         getByOriginalUrl(url).then((shortUrl) => {
           res.json({ original_url: url, short_url: shortUrl });
         });
@@ -56,8 +63,14 @@ app.post("/api/shorturl", (req, res) => {
 // Function to handle GET to /api/shorturl/:shortUrl
 app.get("/api/shorturl/:shortUrl", (req, res) => {
   const shortUrl = req.params.shortUrl;
+  console.log(
+    "API/SHORTURL/:SHORTURL IS CALLED WITH, getbyshorturl called: " + shortUrl
+  );
   getByShortUrl(shortUrl).then((url) => {
     if (url) {
+      console.log(
+        "URL IS FOUND BY SHORT NUMBER, LINE 66, REDIRECTING TO: " + url
+      );
       // If url exists, redirect to it
       res.redirect(url);
     } else {
@@ -72,8 +85,6 @@ function isValidURL(url) {
     /^(http|https):\/\/(?:www\.)?[a-z0-9]+\.[a-z]+(\/[a-z0-9]+)*$/i;
   return urlRegex.test(url);
 }
-
-console.log(isValidURL("https://www.google.com"));
 
 // Use of mongoose starts here
 const mongoose = require("mongoose");
@@ -97,7 +108,6 @@ const Url = mongoose.model("Url", urlSchema);
 // Function to get the next available short_url
 async function getNextShortUrl() {
   try {
-    console.log("GetNextShortUrl is called");
     const data = await Url.find({});
     return data.length + 1;
   } catch (err) {
@@ -108,7 +118,6 @@ async function getNextShortUrl() {
 // Function to add a new url to the database
 async function addUrl(url) {
   try {
-    console.log("AddUrl: " + url);
     const shortUrl = await getNextShortUrl();
     const newUrl = new Url({ original_url: url, short_url: shortUrl });
     const savedUrl = await newUrl.save();
@@ -122,7 +131,6 @@ async function addUrl(url) {
 // Function to get a url from the database
 async function getByOriginalUrl(url) {
   try {
-    console.log("GetbyOriginalUrl: " + url);
     const foundUrl = await Url.findOne({ original_url: url });
     return foundUrl ? foundUrl.short_url : null;
   } catch (err) {
@@ -134,7 +142,6 @@ async function getByOriginalUrl(url) {
 // Function to get a url from the database
 async function getByShortUrl(shortUrl) {
   try {
-    console.log("GetbyShortUrl: " + shortUrl);
     const foundLongUrl = await Url.findOne({ short_url: shortUrl });
     return foundLongUrl ? foundLongUrl.original_url : null;
   } catch (err) {
@@ -146,7 +153,6 @@ async function getByShortUrl(shortUrl) {
 // Function to check if a url is already in the database
 async function urlExists(url) {
   try {
-    console.log("UrlExists: " + url);
     const data = await Url.findOne({ original_url: url });
     return data;
   } catch (err) {
