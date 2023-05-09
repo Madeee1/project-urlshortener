@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const bodyParser = require("body-parser");
+const dns = require("dns");
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -31,33 +32,39 @@ app.listen(port, function () {
 app.post("/api/shorturl", (req, res) => {
   const url = req.body.url;
 
-  // Check if url is valid
-  if (!isValidURL(url)) {
-    console.log("URL SENT & INVALID: " + url);
-    res.json({ error: "invalid url" });
-  } else {
-    // Check if url is already in database using then()
-    urlExists(url).then((data) => {
-      console.log("URL EXISTS: " + data);
-      if (data === null) {
-        console.log("URL EXISTS, LINE 43, ADDURL IS CALLED FOR: " + url);
-        addUrl(url).then((savedUrl) => {
-          res.json({
-            original_url: savedUrl.original_url,
-            short_url: savedUrl.short_url,
-          });
-        });
+  isValidURL(url)
+    .then((isValidBool) => {
+      if (!isValidBool) {
+        console.log("URL SENT & INVALID: " + url);
+        res.json({ error: "invalid url" });
       } else {
-        console.log(
-          "URL DOES NOT EXIST IN MONGO, LINE 1, GETBYORIGINALURL CALLED FOR: " +
-            url
-        );
-        getByOriginalUrl(url).then((shortUrl) => {
-          res.json({ original_url: url, short_url: shortUrl });
+        // Check if url is already in database using then()
+        urlExists(url).then((data) => {
+          console.log("URL EXISTS: " + data);
+          if (data === null) {
+            console.log("URL EXISTS, LINE 43, ADDURL IS CALLED FOR: " + url);
+            addUrl(url).then((savedUrl) => {
+              res.json({
+                original_url: savedUrl.original_url,
+                short_url: savedUrl.short_url,
+              });
+            });
+          } else {
+            console.log(
+              "URL DOES NOT EXIST IN MONGO, LINE 1, GETBYORIGINALURL CALLED FOR: " +
+                url
+            );
+            getByOriginalUrl(url).then((shortUrl) => {
+              res.json({ original_url: url, short_url: shortUrl });
+            });
+          }
         });
       }
+    })
+    .catch((err) => {
+      console.log("URL SENT & INVALID: " + url);
+      res.json({ error: "invalid url" });
     });
-  }
 });
 
 // Function to handle GET to /api/shorturl/:shortUrl
@@ -80,11 +87,26 @@ app.get("/api/shorturl/:shortUrl", (req, res) => {
 });
 
 // Function to test if url is valid with this regex
-function isValidURL(url) {
-  const urlRegex =
-    /^(http|https):\/\/(?:www\.)?[a-z0-9]+\.[a-z]+(\/[a-z0-9]+)*$/i;
-  return urlRegex.test(url);
+async function isValidURL(url) {
+  const { hostname } = new URL(url);
+  return new Promise((resolve, reject) => {
+    dns.lookup(hostname, (err) => {
+      if (err) {
+        reject(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
 }
+
+isValidURL("ftp:/john-doe.invalidTLD")
+  .then((isValid) => {
+    console.log("NIH HASILNYA NIH" + isValid);
+  })
+  .catch((err) => {
+    console.log("ERROR KAH" + err);
+  });
 
 // Use of mongoose starts here
 const mongoose = require("mongoose");
